@@ -229,7 +229,7 @@ class ProcessCheckTest(AgentCheckTest):
         self.run_check(config, mocks={'get_pagefault_stats': noop_get_pagefault_stats})
 
     def mock_find_pids(self, name, search_string, exact_match=True, ignore_ad=True,
-                       refresh_ad_cache=True):
+                       refresh_ad_cache=True, parent_pid=None):
         idx = search_string[0].split('_')[1]
         return self.CONFIG_STUBS[int(idx)]['mocked_processes']
 
