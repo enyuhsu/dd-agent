@@ -92,7 +92,7 @@ class ProcessCheck(AgentCheck):
         now = time.time()
         return now - self.last_pid_cache_ts.get(name, 0) > self.pid_cache_duration
 
-    def find_pids(self, name, search_string, exact_match, ignore_ad=True):
+    def find_pids(self, name, search_string, exact_match, ignore_ad=True, parent_pid=None):
         """
         Create a set of pids of selected processes.
         Search for search_string
@@ -111,6 +111,11 @@ class ProcessCheck(AgentCheck):
         for proc in psutil.process_iter():
             # Skip access denied processes
             if not refresh_ad_cache and proc.pid in self.ad_cache:
+                continue
+
+            # Check for parent_pid
+            parent = proc.parent()
+            if parent_pid is not None and (parent is None or parent.pid() != parent_pid):
                 continue
 
             found = False
@@ -286,6 +291,8 @@ class ProcessCheck(AgentCheck):
     def check(self, instance):
         name = instance.get('name', None)
         tags = instance.get('tags', [])
+        parent_pid = instance.get('parent_pid', None)
+        parent_pid = int(parent_pid) if parent_pid is not None else None
         exact_match = _is_affirmative(instance.get('exact_match', True))
         search_string = instance.get('search_string', None)
         ignore_ad = _is_affirmative(instance.get('ignore_denied_access', True))
@@ -309,7 +316,8 @@ class ProcessCheck(AgentCheck):
             name,
             search_string,
             exact_match,
-            ignore_ad=ignore_ad
+            ignore_ad=ignore_ad,
+            parent_pid=parent_pid
         )
 
         proc_state = self.get_process_state(name, pids)
