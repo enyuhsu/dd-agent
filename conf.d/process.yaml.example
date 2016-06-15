@@ -22,8 +22,13 @@ instances:
 #    thresholds: (optional) Two ranges: critical and warning
 #         warning: (optional) List of two values: If the number of processes found is below the first value or
 #                  above the second one, the process check will return WARNING.
+#                  OR any of the following keys:
+#              if_below: (optional) return WARNING if the number of processes found is below this value
+#              if_above: (optional) return WARNING if the number of processes found is above this value
 #         critical: (optional) List of two values: If the number of processes found is below the first value or
 #                   above the second one, the process check will return CRITICAL.
+#              if_below: (optional) return CRITICAL if the number of processes found is below this value
+#              if_above: (optional) return CRITICAL if the number of processes found is above this value
 #     In this example, process check will return OK for 3 to 5 process. WARNING for 1, 2, 6, 7 processes and Critical below 1 or above 7.
 #     CRITICAL is always dominant in case of overlapping.
 #

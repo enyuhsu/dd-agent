@@ -115,7 +115,7 @@ class ProcessCheck(AgentCheck):
 
             # Check for parent_pid
             parent = proc.parent()
-            if parent_pid is not None and (parent is None or parent.pid() != parent_pid):
+            if parent_pid is not None and (parent is None or parent.pid != parent_pid):
                 continue
 
             found = False
@@ -361,8 +361,21 @@ class ProcessCheck(AgentCheck):
         if not bounds and nb_procs < 1:
             status = AgentCheck.CRITICAL
         elif bounds:
-            warning = bounds.get('warning', [1, float('inf')])
-            critical = bounds.get('critical', [1, float('inf')])
+            try:
+                warning = [bounds['warning'].get('if_below', 1),
+                           bounds['warning'].get('if_above', float('inf'))]
+            except AttributeError:
+                warning = bounds.get('warning', [1, float('inf')])
+            except KeyError:
+                warning = [1, float('inf')]
+
+            try:
+                critical = [bounds['critical'].get('if_below', 1),
+                            bounds['critical'].get('if_above', float('inf'))]
+            except AttributeError:
+                critical = bounds.get('critical', [1, float('inf')])
+            except KeyError:
+                critical = [1, float('inf')]
 
             if warning[1] < nb_procs or nb_procs < warning[0]:
                 status = AgentCheck.WARNING
