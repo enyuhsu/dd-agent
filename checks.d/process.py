@@ -113,39 +113,36 @@ class ProcessCheck(AgentCheck):
             if not refresh_ad_cache and proc.pid in self.ad_cache:
                 continue
 
-            # Check for parent_pid
-            parent = proc.parent()
-            if parent_pid is not None and (parent is None or parent.pid != parent_pid):
-                continue
-
             found = False
-            for string in search_string:
-                try:
-                    # FIXME 6.x: All has been deprecated from the doc, should be removed
-                    if string == 'All':
-                        found = True
-                    if exact_match:
-                        if proc.name() == string:
+            try:
+                parent = proc.parent()
+                if parent_pid is None or (parent is not None and parent.pid == parent_pid):
+                    for string in search_string:
+                        # FIXME 6.x: All has been deprecated from the doc, should be removed
+                        if string == 'All':
                             found = True
-                    else:
-                        cmdline = proc.cmdline()
-                        if string in ' '.join(cmdline):
-                            found = True
-                except psutil.NoSuchProcess:
-                    self.log.warning('Process disappeared while scanning')
-                except psutil.AccessDenied, e:
-                    ad_error_logger('Access denied to process with PID %s', proc.pid)
-                    ad_error_logger('Error: %s', e)
-                    if refresh_ad_cache:
-                        self.ad_cache.add(proc.pid)
-                    if not ignore_ad:
-                        raise
-                else:
-                    if refresh_ad_cache:
-                        self.ad_cache.discard(proc.pid)
-                    if found:
-                        matching_pids.add(proc.pid)
-                        break
+                        if exact_match:
+                            if proc.name() == string:
+                                found = True
+                        else:
+                            cmdline = proc.cmdline()
+                            if string in ' '.join(cmdline):
+                                found = True
+            except psutil.NoSuchProcess:
+                self.log.warning('Process disappeared while scanning')
+            except psutil.AccessDenied, e:
+                ad_error_logger('Access denied to process with PID %s', proc.pid)
+                ad_error_logger('Error: %s', e)
+                if refresh_ad_cache:
+                    self.ad_cache.add(proc.pid)
+                if not ignore_ad:
+                    raise
+            else:
+                if refresh_ad_cache:
+                    self.ad_cache.discard(proc.pid)
+                if found:
+                    matching_pids.add(proc.pid)
+                    break
 
         self.pid_cache[name] = matching_pids
         self.last_pid_cache_ts[name] = time.time()
